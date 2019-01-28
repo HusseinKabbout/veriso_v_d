@@ -1,25 +1,14 @@
 # coding=utf-8
 import sys
 import traceback
-from builtins import str
-from qgis.PyQt.QtCore import QObject, QSettings, Qt
+from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import QApplication
-from qgis.core import QgsProject
-from qgis.gui import QgsMessageBar
-
-from veriso.base.utils.loadlayer import LoadLayer
-
-try:
-    _encoding = QApplication.UnicodeUTF8
-
-
-    def _translate(context, text, disambig):
-        return QApplication.translate(context, text, disambig, _encoding)
-except AttributeError:
-    def _translate(context, text, disambig):
-        return QApplication.translate(context, text, disambig)
-
+from qgis.core import Qgis
 from veriso.modules.complexcheck_base import ComplexCheckBase
+
+
+def _translate(context, text, disambig):
+    return QApplication.translate(context, text, disambig)
 
 
 class ComplexCheck(ComplexCheckBase):
@@ -38,7 +27,7 @@ class ComplexCheck(ComplexCheckBase):
         self.project_id = self.settings.value("project/id")
 
         locale = QSettings().value('locale/userLocale')[
-                 0:2]  # this is for multilingual legends
+            0:2]  # this is for multilingual legends
 
         if locale == "fr":
             pass
@@ -49,8 +38,8 @@ class ComplexCheck(ComplexCheckBase):
 
         if not project_id:
             self.message_bar.pushCritical(
-                    "Error", _translate("VeriSO_V+D_BB", "project_id not "
-                                                         "set", None))
+                "Error", _translate("VeriSO_V+D_BB", "project_id not "
+                                    "set", None))
             return
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -67,14 +56,14 @@ class ComplexCheck(ComplexCheckBase):
                 "geom": "geometrie", "key": "ogc_fid", "sql": "",
                 "readonly": True, "group": group,
                 "style": "bodenbedeckung/boflaeche_strassennetz.qml"
-            }
+                }
             vlayer = self.layer_loader.load(layer, True, True)
 
         except Exception:
             QApplication.restoreOverrideCursor()
             exc_type, exc_value, exc_traceback = sys.exc_info()
             self.message_bar.pushMessage("Error", str(
-                    traceback.format_exc(exc_traceback)),
-                                         level=QgsMessageBar.CRITICAL,
-                                         duration=0)
+                traceback.format_exc(exc_traceback)),
+                level=Qgis.Critical,
+                duration=0)
         QApplication.restoreOverrideCursor()

@@ -2,26 +2,16 @@
 import os
 import sys
 import traceback
-from builtins import str
-from qgis.PyQt.QtCore import QDir, QObject, QSettings, Qt
+from qgis.PyQt.QtCore import QDir, QSettings, Qt
 from qgis.PyQt.QtWidgets import QApplication
-from qgis.core import QgsProject
-from qgis.gui import QgsMessageBar
-
-from veriso.base.utils.loadlayer import LoadLayer
-
-try:
-    _encoding = QApplication.UnicodeUTF8
-
-
-    def _translate(context, text, disambig):
-        return QApplication.translate(context, text, disambig, _encoding)
-except AttributeError:
-    def _translate(context, text, disambig):
-        return QApplication.translate(context, text, disambig)
+from qgis.core import Qgis
 
 from collections import OrderedDict
 from veriso.modules.complexcheck_base import ComplexCheckBase
+
+
+def _translate(context, text, disambig):
+    return QApplication.translate(context, text, disambig)
 
 
 class ComplexCheck(ComplexCheckBase):
@@ -41,7 +31,7 @@ class ComplexCheck(ComplexCheckBase):
         self.project_id = self.settings.value("project/id")
 
         locale = QSettings().value('locale/userLocale')[
-                 0:2]  # this is for multilingual legends
+            0:2]  # this is for multilingual legends
 
         if locale == "fr":
             pass
@@ -69,7 +59,7 @@ class ComplexCheck(ComplexCheckBase):
                 "featuretype": "bodenbedeckung_boflaeche", "geom": "geometrie",
                 "key": "ogc_fid", "sql": "", "readonly": True, "group": group,
                 "style": "bodenbedeckung/boflaeche_color.qml"
-            }
+                }
             vlayer = self.layer_loader.load(layer, True, True)
 
             layer = {
@@ -80,7 +70,7 @@ class ComplexCheck(ComplexCheckBase):
                 "geom": "geometrie", "key": "ogc_fid", "sql": "",
                 "readonly": True, "group": group,
                 "style": "bodenbedeckung/projboflaeche_color.qml"
-            }
+                }
             vlayer = self.layer_loader.load(layer, True, True)
 
             layer = {
@@ -91,7 +81,7 @@ class ComplexCheck(ComplexCheckBase):
                 "geom": "geometrie", "key": "ogc_fid", "sql": "",
                 "readonly": True, "group": group,
                 "style": "einzelobjekte/eo_flaeche_color.qml"
-            }
+                }
             vlayer = self.layer_loader.load(layer, True, True)
 
             layer = {
@@ -102,7 +92,7 @@ class ComplexCheck(ComplexCheckBase):
                 "geom": "geometrie", "key": "ogc_fid", "sql": "",
                 "readonly": True, "group": group,
                 "style": "einzelobjekte/eo_linie_color.qml"
-            }
+                }
             vlayer = self.layer_loader.load(layer, True, True)
 
             layer = {
@@ -113,7 +103,7 @@ class ComplexCheck(ComplexCheckBase):
                 "geom": "geometrie", "key": "ogc_fid", "sql": "",
                 "readonly": True, "group": group,
                 "style": "einzelobjekte/eo_punkte_color.qml"
-            }
+                }
             vlayer = self.layer_loader.load(layer, True, True)
 
             layer = {
@@ -122,7 +112,7 @@ class ComplexCheck(ComplexCheckBase):
                 "featuretype": "v_bodenbedeckung_boflaechesymbol",
                 "geom": "pos", "key": "ogc_fid", "sql": "", "readonly": True,
                 "group": group, "style": "bodenbedeckung/bb_symbole.qml"
-            }
+                }
             vlayer = self.layer_loader.load(layer, True, True)
 
             # export some statistics here.
@@ -135,7 +125,7 @@ class ComplexCheck(ComplexCheckBase):
                 "geom": "geometrie", "key": "ogc_fid", "sql": "",
                 "readonly": True, "group": group,
                 "style": "global_qml/gemeindegrenze/gemgre_strichliert.qml"
-            }
+                }
 
             gemgrelayer = self.layer_loader.load(layer)
             if gemgrelayer:
@@ -149,9 +139,9 @@ class ComplexCheck(ComplexCheckBase):
             QApplication.restoreOverrideCursor()
             exc_type, exc_value, exc_traceback = sys.exc_info()
             self.message_bar.pushMessage("Error", str(
-                    traceback.format_exc(exc_traceback)),
-                                         level=QgsMessageBar.CRITICAL,
-                                         duration=0)
+                traceback.format_exc(exc_traceback)),
+                level=Qgis.Critical,
+                duration=0)
         QApplication.restoreOverrideCursor()
 
     def export_lfp3_pro_ts(self, vlayer):
@@ -159,40 +149,41 @@ class ComplexCheck(ComplexCheckBase):
             import xlsxwriter
         except Exception as e:
             self.message_bar.pushMessage("Error", str(e),
-                                         level=QgsMessageBar.CRITICAL,
+                                         level=Qgis.Critical,
                                          duration=0)
             return
 
             # Create excel file.
         filename = QDir.convertSeparators(
-                QDir.cleanPath(
-                        os.path.join(self.project_dir, "lfp3_pro_ts.xlsx")))
+            QDir.cleanPath(
+                os.path.join(self.project_dir, "lfp3_pro_ts.xlsx")))
         workbook = xlsxwriter.Workbook(filename)
         fmt_bold = workbook.add_format({'bold': True, 'font_name': 'Cadastra'})
         fmt_bold_border = workbook.add_format(
-                {'bold': True, 'border': 1, 'font_name': 'Cadastra'})
-        fmt_border = workbook.add_format({'border': 1, 'font_name': 'Cadastra'})
+            {'bold': True, 'border': 1, 'font_name': 'Cadastra'})
+        fmt_border = workbook.add_format(
+            {'border': 1, 'font_name': 'Cadastra'})
         fmt_border_decimal = workbook.add_format(
-                {'border': 1, 'font_name': 'Cadastra', 'num_format': '0.00'})
+            {'border': 1, 'font_name': 'Cadastra', 'num_format': '0.00'})
         fmt_header = workbook.add_format(
-                {'bg_color': '#CACACA', 'border': 1, 'font_name': 'Cadastra'})
+            {'bg_color': '#CACACA', 'border': 1, 'font_name': 'Cadastra'})
         fmt_italic = workbook.add_format(
-                {'italic': True, 'border': 1, 'font_name': 'Cadastra'})
+            {'italic': True, 'border': 1, 'font_name': 'Cadastra'})
         fmt_sum = workbook.add_format({
             'bold': True, 'font_color': 'blue',
             'border': 1, 'font_name': 'Cadastra'
-        })
+            })
         fmt_sum_decimal = workbook.add_format({
             'bold': True,
             'font_color': 'blue',
             'border': 1,
             'font_name': 'Cadastra',
             'num_format': '0.00'
-        })
+            })
 
         # Create the worksheet for the points defects.
         worksheet = workbook.add_worksheet(
-                _translate("VeriSO_V+D_BB", u'LFP3 pro TS', None))
+            _translate("VeriSO_V+D_BB", u'LFP3 pro TS', None))
         worksheet.set_paper(9)
         worksheet.set_portrait()
 

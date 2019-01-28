@@ -1,26 +1,15 @@
 # coding=utf-8
 import sys
 import traceback
-from builtins import str
-from qgis.PyQt.QtCore import QObject, QSettings, Qt
+from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import QApplication
-from qgis.core import QgsProject, QgsVectorJoinInfo
-from qgis.gui import QgsMessageBar
-
-from veriso.base.utils.loadlayer import LoadLayer
-
-try:
-    _encoding = QApplication.UnicodeUTF8
-
-
-    def _translate(context, text, disambig):
-        return QApplication.translate(context, text, disambig, _encoding)
-except AttributeError:
-    def _translate(context, text, disambig):
-        return QApplication.translate(context, text, disambig)
-
+from qgis.core import QgsVectorLayerJoinInfo, Qgis
 from collections import OrderedDict
 from veriso.modules.complexcheck_base import ComplexCheckBase
+
+
+def _translate(context, text, disambig):
+    return QApplication.translate(context, text, disambig)
 
 
 class ComplexCheck(ComplexCheckBase):
@@ -36,7 +25,7 @@ class ComplexCheck(ComplexCheckBase):
         epsg = self.settings.value("project/epsg")
 
         locale = QSettings().value('locale/userLocale')[
-                 0:2]  # this is for multilingual legends
+            0:2]  # this is for multilingual legends
 
         # If locale is different to frence or italian, german will be used.
         # Otherwise we get into troubles with the legends, e.g. locale = "en"
@@ -70,7 +59,7 @@ class ComplexCheck(ComplexCheckBase):
                 "featuretype": "fixpunktekategorie1_lfp1nachfuehrung",
                 "geom": "perimeter", "key": "ogc_fid", "sql": "",
                 "readonly": True, "group": group
-            }
+                }
 
             # Visibility and if legend and/or groupd should be collapsed can
             # be set with parameters in the self.layer_loader.load()
@@ -85,19 +74,19 @@ class ComplexCheck(ComplexCheckBase):
                 "featuretype": "fixpunktekategorie1_lfp1", "geom": "geometrie",
                 "key": "ogc_fid", "sql": "", "readonly": True, "group": group,
                 "style": "fixpunkte/lfp2.qml"
-            }
+                }
 
             vlayer_lfp1 = self.layer_loader.load(layer)
 
             # Join two layers (lfp1 and lfp1nachfuehrung)
             lfp1_field = "entstehung"
             lfp1_nf_field = "ogc_fid"
-            join_obj = QgsVectorJoinInfo()
-            join_obj.joinLayerId = vlayer_lfp1_nf.id()
-            join_obj.joinFieldName = lfp1_nf_field
-            join_obj.targetFieldName = lfp1_field
-            join_obj.memoryCache = True
-            join_obj.prefix = "lfp1_nf_"
+            join_obj = QgsVectorLayerJoinInfo()
+            join_obj.setJoinLayerId(vlayer_lfp1_nf.id())
+            join_obj.setJoinFieldName(lfp1_nf_field)
+            join_obj.setTargetFieldName(lfp1_field)
+            join_obj.setUsingMemoryCache(True)
+            join_obj.setPrefix("lfp1_nf_")
             vlayer_lfp1.addJoin(join_obj)
 
             # This is how WMS layer work.
@@ -109,7 +98,7 @@ class ComplexCheck(ComplexCheckBase):
                 "layers": "ch.swisstopo.fixpunkte-lfp1",
                 "format": "image/png", "crs": "EPSG:" + str(epsg),
                 "group": group
-            }
+                }
 
             vlayer = self.layer_loader.load(layer, False, True)
 
@@ -121,7 +110,7 @@ class ComplexCheck(ComplexCheckBase):
                 "featuretype": "fixpunktekategorie1_hfp1nachfuehrung",
                 "geom": "perimeter", "key": "ogc_fid", "sql": "",
                 "readonly": True, "group": group
-            }
+                }
 
             vlayer_hfp1_nf = self.layer_loader.load(layer, False, True)
 
@@ -131,19 +120,19 @@ class ComplexCheck(ComplexCheckBase):
                 "featuretype": "fixpunktekategorie1_hfp1", "geom": "geometrie",
                 "key": "ogc_fid", "sql": "", "readonly": True, "group": group,
                 "style": "fixpunkte/hfp2.qml"
-            }
+                }
 
             vlayer_hfp1 = self.layer_loader.load(layer)
 
             # Join two layers (hfp1 and hfp1nachfuehrung)
             hfp1_field = "entstehung"
             hfp1_nf_field = "ogc_fid"
-            join_obj = QgsVectorJoinInfo()
-            join_obj.joinLayerId = vlayer_hfp1_nf.id()
-            join_obj.joinFieldName = hfp1_nf_field
-            join_obj.targetFieldName = hfp1_field
-            join_obj.memoryCache = True
-            join_obj.prefix = "hfp1_nf_"
+            join_obj = QgsVectorLayerJoinInfo()
+            join_obj.setJoinLayerId(vlayer_hfp1_nf.id())
+            join_obj.setJoinFieldName(hfp1_nf_field)
+            join_obj.setTargetFieldName(hfp1_field)
+            join_obj.setUsingMemoryCache(True)
+            join_obj.setPrefix("hfp1_nf_")
             vlayer_hfp1.addJoin(join_obj)
 
             layer = {
@@ -154,7 +143,7 @@ class ComplexCheck(ComplexCheckBase):
                 "layers": "ch.swisstopo.fixpunkte-hfp1",
                 "format": "image/png", "crs": "EPSG:" + str(epsg),
                 "group": group
-            }
+                }
 
             vlayer = self.layer_loader.load(layer, False, True)
 
@@ -167,7 +156,7 @@ class ComplexCheck(ComplexCheckBase):
                 "geom": "geometrie", "key": "ogc_fid", "sql": "",
                 "readonly": True, "group": group,
                 "style": "global_qml/gemeindegrenze/gemgre_strichliert.qml"
-            }
+                }
 
             gemgrelayer = self.layer_loader.load(layer)
 
@@ -188,7 +177,7 @@ class ComplexCheck(ComplexCheckBase):
             QApplication.restoreOverrideCursor()
             exc_type, exc_value, exc_traceback = sys.exc_info()
             self.message_bar.pushMessage("Error", str(
-                    traceback.format_exc(exc_traceback)),
-                                         level=QgsMessageBar.CRITICAL,
-                                         duration=0)
+                traceback.format_exc(exc_traceback)),
+                level=Qgis.Critical,
+                duration=0)
         QApplication.restoreOverrideCursor()

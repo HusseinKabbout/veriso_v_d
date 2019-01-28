@@ -1,27 +1,16 @@
 # coding=utf-8
 import sys
 import traceback
-from builtins import str
-from qgis.PyQt.QtCore import QObject, QSettings, Qt
+from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import QApplication
-from qgis.core import QgsProject
-from qgis.gui import QgsMessageBar
-
-from veriso.base.utils.loadlayer import LoadLayer
-
-try:
-    _encoding = QApplication.UnicodeUTF8
-
-
-    def _translate(context, text, disambig):
-        return QApplication.translate(context, text, disambig, _encoding)
-except AttributeError:
-
-    def _translate(context, text, disambig):
-        return QApplication.translate(context, text, disambig)
+from qgis.core import Qgis
 
 from collections import OrderedDict
 from veriso.modules.complexcheck_base import ComplexCheckBase
+
+
+def _translate(context, text, disambig):
+    return QApplication.translate(context, text, disambig)
 
 
 class ComplexCheck(ComplexCheckBase):
@@ -41,7 +30,7 @@ class ComplexCheck(ComplexCheckBase):
         self.project_id = self.settings.value("project/id")
 
         locale = QSettings().value('locale/userLocale')[
-                 0:2]  # this is for multilingual legends
+            0:2]  # this is for multilingual legends
 
         if locale == "fr":
             pass
@@ -70,7 +59,7 @@ class ComplexCheck(ComplexCheckBase):
                 "geom": "geometrie", "key": "ogc_fid", "sql": "",
                 "readonly": True, "group": group,
                 "style": "grundstuecke/liegenschaften.qml"
-            }
+                }
             vlayer = self.layer_loader.load(layer, False, True)
 
             layer = {
@@ -82,14 +71,14 @@ class ComplexCheck(ComplexCheckBase):
                 "geom": "pos", "key": "ogc_fid",
                 "sql": "art = 'Liegenschaft'", "readonly": True,
                 "group": group, "style": "grundstuecke/grundstueckpos.qml"
-            }
+                }
             vlayer = self.layer_loader.load(layer, False, True)
 
         except Exception:
             QApplication.restoreOverrideCursor()
             exc_type, exc_value, exc_traceback = sys.exc_info()
             self.message_bar.pushMessage("Error", str(
-                    traceback.format_exc(exc_traceback)),
-                                         level=QgsMessageBar.CRITICAL,
-                                         duration=0)
+                traceback.format_exc(exc_traceback)),
+                level=Qgis.Critical,
+                duration=0)
         QApplication.restoreOverrideCursor()

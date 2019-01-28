@@ -2,26 +2,15 @@
 import os
 import sys
 import traceback
-from builtins import str
-from qgis.PyQt.QtCore import QDir, QObject, QSettings, Qt
+from qgis.PyQt.QtCore import QDir, QSettings, Qt
 from qgis.PyQt.QtWidgets import QApplication
-from qgis.core import QgsProject, QgsVectorJoinInfo
-from qgis.gui import QgsMessageBar
-
-from veriso.base.utils.loadlayer import LoadLayer
-
-try:
-    _encoding = QApplication.UnicodeUTF8
-
-
-    def _translate(context, text, disambig):
-        return QApplication.translate(context, text, disambig, _encoding)
-except AttributeError:
-    def _translate(context, text, disambig):
-        return QApplication.translate(context, text, disambig)
-
+from qgis.core import QgsVectorLayerJoinInfo, Qgis
 from collections import OrderedDict
 from veriso.modules.complexcheck_base import ComplexCheckBase
+
+
+def _translate(context, text, disambig):
+    return QApplication.translate(context, text, disambig)
 
 
 class ComplexCheck(ComplexCheckBase):
@@ -41,7 +30,7 @@ class ComplexCheck(ComplexCheckBase):
         self.project_id = self.settings.value("project/id")
 
         locale = QSettings().value('locale/userLocale')[
-                 0:2]  # this is for multilingual legends
+            0:2]  # this is for multilingual legends
 
         # If locale is different to frence or italian, german will be used.
         # Otherwise we get into troubles with the legends, e.g. locale = "en"
@@ -74,7 +63,7 @@ class ComplexCheck(ComplexCheckBase):
                 "geom": "geometrie", "key": "ogc_fid", "sql": "",
                 "readonly": True, "group": group,
                 "style": "tseinteilung/toleranzstufe_" + locale + ".qml"
-            }
+                }
 
             # Visibility and if legend and/or groupd should be collapsed can
             # be set with parameters in the self.layer_loader.load()
@@ -90,7 +79,7 @@ class ComplexCheck(ComplexCheckBase):
                 "featuretype": "fixpunktekategorie3_lfp3nachfuehrung",
                 "geom": "perimeter", "key": "ogc_fid", "sql": "",
                 "readonly": True, "group": group
-            }
+                }
 
             vlayer_lfp3_nf = self.layer_loader.load(layer, False, True)
 
@@ -100,19 +89,19 @@ class ComplexCheck(ComplexCheckBase):
                 "featuretype": "fixpunktekategorie3_lfp3", "geom": "geometrie",
                 "key": "ogc_fid", "sql": "", "readonly": True, "group": group,
                 "style": "fixpunkte/lfp3_" + locale + ".qml"
-            }
+                }
 
             vlayer_lfp3 = self.layer_loader.load(layer)
 
             # Join two layers (lfp3 and lfp3nachfuehrung)
             lfp3_field = "entstehung"
             lfp3_nf_field = "ogc_fid"
-            join_obj = QgsVectorJoinInfo()
-            join_obj.joinLayerId = vlayer_lfp3_nf.id()
-            join_obj.joinFieldName = lfp3_nf_field
-            join_obj.targetFieldName = lfp3_field
-            join_obj.memoryCache = True
-            join_obj.prefix = "lfp3_nf_"
+            join_obj = QgsVectorLayerJoinInfo()
+            join_obj.setJoinLayerId(vlayer_lfp3_nf.id())
+            join_obj.setJoinFieldName(lfp3_nf_field)
+            join_obj.setTargetFieldName(lfp3_field)
+            join_obj.setUsingMemoryCache(True)
+            join_obj.setPrefix("lfp3_nf_")
             vlayer_lfp3.addJoin(join_obj)
 
             layer = {
@@ -124,7 +113,7 @@ class ComplexCheck(ComplexCheckBase):
                 "geom": "geometrie", "key": "ogc_fid", "sql": "",
                 "readonly": True, "group": group,
                 "style": "fixpunkte/lfp3ausserhalb.qml"
-            }
+                }
 
             vlayer = self.layer_loader.load(layer)
 
@@ -133,7 +122,7 @@ class ComplexCheck(ComplexCheckBase):
                 "title": _translate("VeriSO_V+D_FP3", "LFP3 pro TS", None),
                 "featuretype": "t_lfp3_pro_ts", "key": "ogc_fid", "sql": "",
                 "readonly": True, "group": group
-            }
+                }
 
             vlayer_lfp3_pro_ts = self.layer_loader.load(layer)
 
@@ -145,7 +134,7 @@ class ComplexCheck(ComplexCheckBase):
                 "geom": "geometrie", "key": "ogc_fid", "sql": "",
                 "readonly": True, "group": group,
                 "style": "global_qml/gemeindegrenze/gemgre_strichliert.qml"
-            }
+                }
 
             gemgrelayer = self.layer_loader.load(layer)
 
@@ -153,7 +142,7 @@ class ComplexCheck(ComplexCheckBase):
             # Bug (?) in QGIS: http://hub.qgis.org/issues/10980
             # Closed for the lack of feedback. Upsi...
             # Still a problem? (sz / 2015-04-12)
-            # sz / 2015-04-20: 
+            # sz / 2015-04-20:
             # Aaaah: still a problem. Some really strange combination of
             # checked/unchecked-order-of-layers-thing?
             # If wms is addes after gemgre then is scales (rect.scale(5))?!
@@ -178,9 +167,9 @@ class ComplexCheck(ComplexCheckBase):
             QApplication.restoreOverrideCursor()
             exc_type, exc_value, exc_traceback = sys.exc_info()
             self.message_bar.pushMessage("Error", str(
-                    traceback.format_exc(exc_traceback)),
-                                         level=QgsMessageBar.CRITICAL,
-                                         duration=0)
+                traceback.format_exc(exc_traceback)),
+                level=Qgis.Critical,
+                duration=0)
         QApplication.restoreOverrideCursor()
 
     def export_to_excel(self, vlayer):
@@ -188,40 +177,41 @@ class ComplexCheck(ComplexCheckBase):
             import xlsxwriter
         except Exception as e:
             self.message_bar.pushMessage("Error", str(e),
-                                         level=QgsMessageBar.CRITICAL,
+                                         level=Qgis.Critical,
                                          duration=0)
             return
 
             # Create excel file.
         filename = QDir.convertSeparators(
-                QDir.cleanPath(
-                        os.path.join(self.project_dir, "lfp3_pro_ts.xlsx")))
+            QDir.cleanPath(
+                os.path.join(self.project_dir, "lfp3_pro_ts.xlsx")))
         workbook = xlsxwriter.Workbook(filename)
         fmt_bold = workbook.add_format({'bold': True, 'font_name': 'Cadastra'})
         fmt_bold_border = workbook.add_format(
-                {'bold': True, 'border': 1, 'font_name': 'Cadastra'})
-        fmt_border = workbook.add_format({'border': 1, 'font_name': 'Cadastra'})
+            {'bold': True, 'border': 1, 'font_name': 'Cadastra'})
+        fmt_border = workbook.add_format(
+            {'border': 1, 'font_name': 'Cadastra'})
         fmt_border_decimal = workbook.add_format(
-                {'border': 1, 'font_name': 'Cadastra', 'num_format': '0.00'})
+            {'border': 1, 'font_name': 'Cadastra', 'num_format': '0.00'})
         fmt_header = workbook.add_format(
-                {'bg_color': '#CACACA', 'border': 1, 'font_name': 'Cadastra'})
+            {'bg_color': '#CACACA', 'border': 1, 'font_name': 'Cadastra'})
         fmt_italic = workbook.add_format(
-                {'italic': True, 'border': 1, 'font_name': 'Cadastra'})
+            {'italic': True, 'border': 1, 'font_name': 'Cadastra'})
         fmt_sum = workbook.add_format({
             'bold': True, 'font_color': 'blue',
             'border': 1, 'font_name': 'Cadastra'
-        })
+            })
         fmt_sum_decimal = workbook.add_format({
             'bold': True,
             'font_color': 'blue',
             'border': 1,
             'font_name': 'Cadastra',
             'num_format': '0.00'
-        })
+            })
 
         # Create the worksheet for the points defects.
         worksheet = workbook.add_worksheet(
-                _translate("VeriSO_V+D_FP3", u'LFP3 pro TS', None))
+            _translate("VeriSO_V+D_FP3", u'LFP3 pro TS', None))
         worksheet.set_paper(9)
         worksheet.set_portrait()
 

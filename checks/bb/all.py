@@ -1,7 +1,5 @@
 # coding=utf-8
-from builtins import str
-
-from qgis.gui import QgsMessageBar
+from qgis.core import Qgis
 from collections import OrderedDict
 
 from veriso.base.utils.utils import dynamic_import
@@ -36,5 +34,5 @@ class ComplexCheck(ComplexCheckBase):
 
         except Exception as e:
             self.message_bar.pushMessage("Error", str(e),
-                                         level=QgsMessageBar.CRITICAL,
+                                         level=Qgis.Critical,
                                          duration=0)
